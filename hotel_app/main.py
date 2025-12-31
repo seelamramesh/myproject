@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlmodel import Session, select, SQLModel
 from contextlib import asynccontextmanager
 from typing import List
@@ -15,6 +17,12 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+app.mount("/static", StaticFiles(directory="hotel_app/static"), name="static")
+
+@app.get("/")
+async def read_index():
+    return FileResponse('hotel_app/static/index.html')
 
 @app.post("/customers/join", response_model=Customer)
 def join_queue(name: str, group_size: int, session: Session = Depends(get_session)):
@@ -148,7 +156,3 @@ def checkout(table_id: int, session: Session = Depends(get_session)):
     session.commit()
 
     return {"message": "Checkout successful", "total_bill": total_bill}
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to Hotel App"}
